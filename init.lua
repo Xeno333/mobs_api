@@ -9,6 +9,8 @@ mobs_api = {
 --[[
 {
     name = <string>,
+    title = <string>, -- Optional will default to name if nil
+    egg_texture = <texture>,
     on_spawn = function(self),
     life_time = <num>,
     health_min = <num>, -- Optional
@@ -223,6 +225,14 @@ function mobs_api.register_mob(def)
     end
 
     core.register_entity(":" .. def.name, entity)
+
+    core.register_craftitem(":" .. def.name .. "_egg", {
+        description = "Spwans " .. (def.title or def.name),
+        inventory_image = def.egg_texture,
+        on_use = function(itemstack, user, pointed_thing)
+            core.add_entity(pointed_thing.above, def.name)
+        end,
+    })
 
     return true, nil
 end
