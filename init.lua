@@ -234,5 +234,36 @@ function mobs_api.register_mob(def)
         end,
     })
 
+    core.register_node(":" .. def.name .. "_spawner", {
+        description = "Spwans " .. (def.title or def.name),
+        tiles = {def.egg_texture},
+        use_texture_alpha = "clip",
+        drop = "",
+
+        on_timer = function(pos, elapsed)
+            local airs = core.find_nodes_in_area(pos - vector.new(5, 5, 5), pos + vector.new(5, 5, 5), "air")
+            local under = vector.new(0, -1, 0)
+
+            while #airs ~= 0 do
+                local v = airs[mobs_api.pr:next(1, #airs)]
+
+                local node = core.registered_nodes[core.get_node(v + under).name or ""]
+                if node.walkable == true then
+                    core.add_entity(v, def.name)
+                    break
+                end
+            end
+
+            local nodetimer = core.get_node_timer(pos)
+            nodetimer:start(mobs_api.pr:next(10, 60))
+        end,
+        on_construct = function(pos)
+            local nodetimer = core.get_node_timer(pos)
+            nodetimer:start(mobs_api.pr:next(10, 60))
+        end,
+
+        groups = {oddly_breakable_by_hand = 1, breakable_by_hand = 1}
+    })
+
     return true, nil
 end
