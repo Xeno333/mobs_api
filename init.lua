@@ -55,15 +55,31 @@ function mobs_api.register_mob(def)
     if not def.health_max then return false, "Needs `health_max = <num>` field!" end
 
     local entity = {
+        get_staticdata = function(self)
+            local table = {}
+
+            for k, v in pairs(self) do
+                if not(type(v) == "userdata" or type(v) == "function") then
+                    table[k] = v
+                end
+            end
+
+            return core.write_json(table)
+        end,
+
         on_activate = function(self, staticdata, dtime_s)
-            if not self._mobs_api_spawned then
+            if staticdata and staticdata ~= "" then
+                local table = core.parse_json(staticdata) or {}
+                for k, v in pairs(table) do
+                    self[k] = v
+                end
+
+            elseif not self._mobs_api_spawned then
                 if self._mobs_api_health_min then
                     self.object:set_hp(mobs_api.pr:next(self._mobs_api_health_min, self._mobs_api_health_max))
                 end
 
                 self._mobs_api_spawned = true
-                self._mobs_api_last_step = 0
-                self._mobs_api_age = 0
 
                 if self._mobs_api_on_spawn then
                     self._mobs_api_on_spawn(self)
@@ -72,35 +88,36 @@ function mobs_api.register_mob(def)
         end,
 
         on_deactivate = function(self, removal)
-            if not removal and not self._mobs_api_static then
+            if (not removal) and (self._mobs_api_static ~= true) then
                 self.object:remove()
                 return
             end
         end,
 
         on_step = function(self, dtime, moveresult)
+            if not self._mobs_api_spawned then return end
+
             self._mobs_api_last_step = self._mobs_api_last_step + dtime
 
             if self._mobs_api_last_step >= mobs_api.step_time then
                 self._mobs_api_age = self._mobs_api_age + self._mobs_api_last_step
-                if self._mobs_api_life_time and self._mobs_api_life_time >= self._mobs_api_age then
+                if self._mobs_api_life_time and self._mobs_api_age >= self._mobs_api_life_time then
                     self.object:remove()
+                    return
                 end
 
                 local m_pos = self.object:get_pos()
 
-                do
-                    local despawn = true
-                    for object in core.objects_inside_radius(m_pos, self._mobs_api_despaw_distance) do
-                        if object:is_player() then
-                            despawn = false
-                            break
-                        end
+                local despawn = true
+                for object in core.objects_inside_radius(m_pos, self._mobs_api_despaw_distance) do
+                    if object:is_player() then
+                        despawn = false
+                        break
                     end
-                    if despawn then
-                        self.object:remove()
-                        return
-                    end
+                end
+                if despawn then
+                    self.object:remove()
+                    return
                 end
 
                 if self._mobs_api_chase_distance ~= nil then
@@ -144,7 +161,7 @@ function mobs_api.register_mob(def)
                     self._mobs_api_on_step(self, dtime, moveresult)
                 end
 
-                self._mobs_api_age = 0
+                self._mobs_api_last_step = 0
             end
         end,
 
@@ -154,6 +171,9 @@ function mobs_api.register_mob(def)
         _mobs_api_despaw_distance = def.despaw_distance or 32,
         _mobs_api_chase_distance = def.chase_distance,
         _mobs_api_walk_speed = def.walk_speed or 1,
+        _mobs_api_spawned = false,
+        _mobs_api_last_step = 0,
+        _mobs_api_age = 0,
 
         -- Callbacks
         _mobs_api_on_spawn = def.on_spawn,
@@ -229,8 +249,10 @@ function mobs_api.register_mob(def)
     core.register_craftitem(":" .. def.name .. "_egg", {
         description = "Spwans " .. (def.title or def.name),
         inventory_image = def.egg_texture,
-        on_use = function(itemstack, user, pointed_thing)
-            core.add_entity(pointed_thing.above, def.name)
+        on_place = function(itemstack, user, pointed_thing)
+            if pointed_thing.above then
+                core.add_entity(pointed_thing.above, def.name)
+            end
         end,
     })
 
