@@ -16,7 +16,7 @@ mobs_api = {
     gravity = <num>,
     health_min = <num>, -- Optional
     health_max = <num>, -- Default health if no min
-    despaw_distance = <num>, -- Defaults to 32
+    despawn_distance = <num>, -- Defaults to 32
     chase_distance = <num>, -- Defaults to nil, leave nil if passive
     walk_speed = <num>, -- Default = 1
     on_chase = function(self, player),
@@ -111,7 +111,7 @@ function mobs_api.register_mob(def)
                 local m_pos = self.object:get_pos()
 
                 local despawn = true
-                for object in core.objects_inside_radius(m_pos, self._mobs_api_despaw_distance) do
+                for object in core.objects_inside_radius(m_pos, self._mobs_api_despawn_distance) do
                     if object:is_player() then
                         despawn = false
                         break
@@ -174,10 +174,10 @@ function mobs_api.register_mob(def)
         -- Vars
         _mobs_api_health_max = def.health_max,
         _mobs_api_static = def.static,
-        _mobs_api_despaw_distance = def.despaw_distance or 32,
+        _mobs_api_despawn_distance = def.despawn_distance or 32,
         _mobs_api_chase_distance = def.chase_distance,
         _mobs_api_walk_speed = def.walk_speed or 1,
-        _mobs_api_gravity = def.gravity or 0,
+        _mobs_api_gravity = -(def.gravity or 0),
         _mobs_api_spawned = false,
         _mobs_api_last_step = 0,
         _mobs_api_age = 0,
