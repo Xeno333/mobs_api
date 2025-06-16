@@ -13,6 +13,7 @@ mobs_api = {
     egg_texture = <texture>,
     on_spawn = function(self),
     life_time = <num>,
+    gravity = <num>,
     health_min = <num>, -- Optional
     health_max = <num>, -- Default health if no min
     despaw_distance = <num>, -- Defaults to 32
@@ -20,6 +21,7 @@ mobs_api = {
     walk_speed = <num>, -- Default = 1
     on_chase = function(self, player),
     on_stop = function(self),
+    on_idle = function(self),
     on_at_player = function(self, player), -- overrides on_stop call if stop is at player
 
     hp_max = def.health_max,
@@ -136,13 +138,13 @@ function mobs_api.register_mob(def)
 
                         if mag > 2 then
                             local v = vector.new(dir.x / mag, dir.y / mag, dir.z / mag)
-                            self.object:set_velocity(v * self._mobs_api_walk_speed)
+                            self.object:set_velocity(v * self._mobs_api_walk_speed + vector.new(0, self._mobs_api_gravity, 0))
                             if self._mobs_api_on_chase ~= nil then
                                 self._mobs_api_on_chase(self, player_to_chase)
                             end
 
                         else
-                            self.object:set_velocity(vector.new(0, 0, 0))
+                            self.object:set_velocity(vector.new(0, self._mobs_api_gravity, 0))
                             if self._mobs_api_on_at_player ~= nil then
                                 self._mobs_api_on_at_player(self, player_to_chase)
 
@@ -152,7 +154,11 @@ function mobs_api.register_mob(def)
                         end
 
                     else
-                        self.object:set_velocity(vector.new(0, 0, 0))
+                        self.object:set_velocity(vector.new(0, self._mobs_api_gravity, 0))
+
+                        if self._mobs_api_on_idle ~= nil then
+                            self._mobs_api_on_idle(self)
+                        end
                     end
                 end
 
@@ -171,6 +177,7 @@ function mobs_api.register_mob(def)
         _mobs_api_despaw_distance = def.despaw_distance or 32,
         _mobs_api_chase_distance = def.chase_distance,
         _mobs_api_walk_speed = def.walk_speed or 1,
+        _mobs_api_gravity = def.gravity or 0,
         _mobs_api_spawned = false,
         _mobs_api_last_step = 0,
         _mobs_api_age = 0,
@@ -182,6 +189,7 @@ function mobs_api.register_mob(def)
         _mobs_api_on_chase = def.on_chase,
         _mobs_api_on_stop = def.on_stop,
         _mobs_api_on_at_player = def.on_at_player,
+        _mobs_api_on_idle = def.on_idle,
 
 
         _mobs_api_spawned = false,
