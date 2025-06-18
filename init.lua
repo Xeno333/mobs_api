@@ -19,6 +19,8 @@ mobs_api = {
     despawn_distance = <num>, -- Defaults to 32
     chase_distance = <num>, -- Defaults to nil, leave nil if passive
     walk_speed = <num>, -- Default = 1
+    on_rightclick = function(self, clicker),
+    on_punch = function(self, puncher, time_from_last_punch, tool_capabilities, dir, damage),
     on_chase = function(self, player),
     on_stop = function(self),
     on_idle = function(self),
@@ -170,6 +172,9 @@ function mobs_api.register_mob(def)
                 self._mobs_api_last_step = 0
             end
         end,
+
+        on_punched = def.on_punched,
+        on_rightclick = def.on_rightclick
 
         -- Vars
         _mobs_api_health_max = def.health_max,
