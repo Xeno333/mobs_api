@@ -11,6 +11,7 @@ mobs_api = {
     name = <string>,
     title = <string>, -- Optional will default to name if nil
     egg_texture = <texture>,
+    spawner_time_range = {min = <num default = 10>, max = <num default = 60>},
     on_spawn = function(self),
     life_time = <num>,
     gravity = <num>,
@@ -269,6 +270,13 @@ function mobs_api.register_mob(def)
         end,
     })
 
+    local spawner_time_min = 10
+    local spawner_time_max = 60
+    if def.spawner_time_range then
+        spawner_time_min = spawner_time_min or def.spawner_time_range.min
+        spawner_time_max = spawner_time_max or def.spawner_time_range.max
+    end
+
     core.register_node(":" .. def.name .. "_spawner", {
         description = "Spwans " .. (def.title or def.name),
         tiles = {def.egg_texture},
@@ -290,11 +298,11 @@ function mobs_api.register_mob(def)
             end
 
             local nodetimer = core.get_node_timer(pos)
-            nodetimer:start(mobs_api.pr:next(10, 60))
+            nodetimer:start(mobs_api.pr:next(spawner_time_min, spawner_time_max))
         end,
         on_construct = function(pos)
             local nodetimer = core.get_node_timer(pos)
-            nodetimer:start(mobs_api.pr:next(10, 60))
+            nodetimer:start(mobs_api.pr:next(spawner_time_min, spawner_time_max))
         end,
 
         groups = {oddly_breakable_by_hand = 1, breakable_by_hand = 1}
