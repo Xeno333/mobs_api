@@ -175,7 +175,7 @@ function mobs_api.register_mob(def)
         end,
 
         on_punched = def.on_punched,
-        on_rightclick = def.on_rightclick
+        on_rightclick = def.on_rightclick,
 
         -- Vars
         _mobs_api_health_max = def.health_max,
